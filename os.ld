@@ -1,8 +1,22 @@
-OUTPUT_FORMAT(binary)
+/* object files are located in the build directory */
+SEARCH_DIR(build)
 
-ENTRY(start)
+/* load the input files */
+INPUT(mbr.o)
+
+/* output as flat binary */
+OUTPUT(bin/os.bin)
+OUTPUT_FORMAT(binary)
 
 SECTIONS
 {
-	. = 0x00000000;
+	.text 0 :
+	{
+		mbr.o (.text)
+	}
+	.rodata 510 :
+	{
+		mbr.o (.rodata)
+	}
 }
+
