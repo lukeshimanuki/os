@@ -10,13 +10,15 @@ OUTPUT_FORMAT(binary)
 
 SECTIONS
 {
-	.text 0 :
+	/* the first 512 bytes, loaded on boot */
+	.mbr 0 :
 	{
-		mbr.o (.text)
-	}
-	.rodata 510 :
-	{
-		mbr.o (.rodata)
-	}
+		addr_mbr = ABSOLUTE(.);
+		/* code to run at boot */
+		mbr.o (.mbr)
+		. = addr_mbr + 510;
+		/* the last 2 bytes, BIOS looks for this code */
+		mbr.o (.boot_signature)
+	} = 0 /* fill gaps with 0s */
 }
 

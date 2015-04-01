@@ -1,8 +1,9 @@
 .code16
 
-.section .text
+.section .mbr, "wx"
 mbr:
-	movw $0x07C0, %ax # set up 4kb stack
+	# set up 4kb stack
+	movw $0x07C0, %ax
 	addw $288, %ax
 	movw %ax, %ss
 	movw $4096, %sp
@@ -17,6 +18,6 @@ mbr:
 
 	jmp . # continuous loop
 
-.section .rodata
+.section .boot_signature, ""
 .word 0xAA55 # boot signature
 
