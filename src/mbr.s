@@ -14,6 +14,11 @@ mbr:
 	movw $0x07C0, %ax
 	movw %ax, %ds
 
+	# print
+	mov $0x0E, %ah
+	mov $97, %al # 'a'
+	int $0x10
+
 	# load kernel
 
 	# set up registers for int 0x13
@@ -21,66 +26,64 @@ mbr:
 	mov $0, %bx
 	mov %bx, %es
 	mov %bx, %di
-	mov $0x81, %dl # use 2nd hard drive
-	mov $0x8, %ah # int 13 code to get drive parameters
+	mov $0x00, %dl # use 1st floppy (usb)
+	mov $0x08, %ah # int 13 code to get drive parameters
 	int $0x13
 
-	# print stuff
-	movb $0x0E, %ah # BIOS print code
-	movb $97, %al # 'a'
-	int $0x10 # send code to BIOS
+	mov %ch, %cl
+	mov $0, %ch
+	mov %cx, %bx # sects/track
 
-	mov %ch, %bl # num sect/track
-	mov %dh, %bh # num heads - 1
-	add $1, %bh # num heads
+	# save num heads
+	add $1, %dh
+	mov %dh, %dl
+	mov $0, %dh
+	push %dx
 
 	# calculate sector
+	mov $1, %ax # start at 2nd sector
 	mov $0, %dx # reset high word for division
-	div %bl # divide sector (ax) by num sectors/track (bl)
+	div %bx # divide sector (ax) by num sectors/track (bx)
 	add $1, %dl # sectors start at 1, not 0
 	mov %dl, %cl # int 0x13 expects sector in cl
-	mov %bx, %ax # restore logical sector to ax
-
-	# print stuff
-	movb $0x0E, %ah # BIOS print code
-	movb $97, %al # 'a'
-	int $0x10 # send code to BIOS
 
 	# calculate head
+	mov $1, %ax # start at 2nd sector
 	mov $0, %dx # reset high word for division
-	div %bl # divide sector (ax) by num sectors/track (bl)
+	div %bx # divide sector (ax) by num sectors/track (bx)
 	mov $0, %dx # set remainder to 0
-	div %bh # divide quotient (ax) by num heads (bh)
+	pop %bx # num heads
+	div %bx # divide quotient (ax) by num heads (bx)
 	mov %dl, %dh # int 0x13 expects head in dh
 	mov %al, %ch # int 0x13 expects cylinder in ch
 
-	# print stuff
-	movb $0x0E, %ah # BIOS print code
-	movb $97, %al # 'a'
-	int $0x10 # send code to BIOS
-
 	# load destination buffer into es:bx
-	mov %ds, %si # 07C0
-	add $512, %si # +512 (boot_loader)
-	mov %ds, %bx # 07C0
-	mov %bx, %es
-	mov %si, %bx
+	mov $0x00, %bx
+	mov %bx, %es # 0x00
+	mov $0x09C0, %bx # 0x07C0 + 512 (boot_loader)
 
 	# print stuff
-	movb $0x0E, %ah # BIOS print code
-	movb $97, %al # 'a'
-	int $0x10 # send code to BIOS
+	mov %ch, %al # cylinder
+	call print
+	mov %dh, %al # head
+	call print
+	mov %cl, %al # sector
+	call print
 
 	# read
-	mov $0x81, %dl # use 2nd drive
+	mov $0x00, %dl # use 1st floppy (usb)
 	mov $2, %ah # read parameter for int 0x13
 	mov $2, %al # number of sectors (512 bytes each?) to read
 	int $0x13 # read data
 
-	# print stuff
-	movb $0x0E, %ah # BIOS print code
-	movb $98, %al # 'b'
-	int $0x10 # send code to BIOS
+	# test print func
+	mov $0x12, %al # "bc"
+	call print
+
+	# print loaded memory
+	mov $0x09C0, %bx # 0x07C0 + 512 (boot_loader)
+	mov (%bx), %al
+	call print
 
 	# run boot loader
 	mov %ds, %si

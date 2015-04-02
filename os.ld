@@ -19,13 +19,13 @@ SECTIONS
 		. = addr_mbr + 510;
 		/* the last 2 bytes, BIOS looks for this code */
 		mbr.o (.boot_signature)
-	} = 0 /* fill gaps with 0s */
+	} = 0x12 /* fill gaps with 0x12 */
 
 	.boot_loader 512 :
 	{
 		addr_boot_loader = ABSOLUTE(.);
 		boot_loader.o (.boot_loader)
-		. = 1024;
-	} = 0x68
+		. = 0xFFFF;
+	} = 0x34
 }
 
