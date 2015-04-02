@@ -9,6 +9,7 @@ bin/os.bin: os.ld build/mbr.o
 
 build/mbr.o: src/mbr.s
 	as src/mbr.s -o build/mbr.o
+	as src/boot_loader.s -o build/boot_loader.o
 
 dump: os.img
 	objdump -m i386:x64-32 -b binary -D os.img
@@ -16,5 +17,5 @@ dump: os.img
 clean:
 	rm -f os.img
 	rm -f bin/os.bin
-	rm -f build/mbr.o
+	rm -f build/mbr.o build/boot_loader.o
 
