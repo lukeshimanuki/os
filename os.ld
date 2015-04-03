@@ -25,7 +25,7 @@ SECTIONS
 	{
 		addr_boot_loader = ABSOLUTE(.);
 		boot_loader.o (.boot_loader)
-		. = 0xFFFF;
+		. = 0x08FF;
 	} = 0x34
 }
 
