@@ -20,37 +20,14 @@ mbr:
 	movw $0x7C00, %sp
 	sti # enable interrupts
 
+	# print a
+	mov $97, %al
+	mov $0x0E, %ah
+	int $0x10
+
 	# set data segment to where we're loaded
 #	movw $0x07C0, %ax
 #	movw %ax, %ds
-
-	mov %dl, %al # drive number
-	call print
-
-	mov $0, %bx
-	mov %bx, %es
-	mov %bx, %di
-	mov $8, %ah
-	int $0x13
-	mov %dl, %al # num drives
-	call print
-	mov %dh, %al # num heads - 1
-	call print
-	mov %ch, %al # num cylinders - 1
-	call print
-	mov %cl, %al # num sectors / track
-	call print
-
-	mov boot_loader, %bx # location of kernel
-	mov %bh, %al # high byte
-	call print
-	mov %bl, %al # low byte
-	call print
-
-	mov $0x7E00, %bx
-	movw $0x5656, (%bx) # set data so we can see if it changed
-
-	# load kernel
 
 	# load destination buffer into es:bx
 	mov $0x7E00, %bx # 0x7C00 + 0x0200 (boot_loader)
@@ -66,22 +43,10 @@ mbr:
 	mov $0x01, %al # number of sectors (512 bytes each?) to read
 	int $0x13 # read data
 
-	call print # actual num read sectors
-
-	# print loaded memory
-	mov $0x7E00, %bx # 0x7C00 + 512 (boot_loader)
-	mov (%bx), %al
-	call print
-
 	# run boot loader
 	mov $0x7E00, %ax
 	mov %ax, %si
 	jmp *%si
-
-.end:
-	cli
-	hlt
-	jmp .end
 
 # prints byte in %al (0->aa, 255->pp)
 print:
