@@ -5,17 +5,24 @@
 .section .mbr, "x"
 .global mbr
 mbr:
-	# set up 4kb stack
-	movw $0x07C0, %ax
-	addw $0x0120, %ax
+	# set segment registers to 0
+	movw $0x0000, %ax
+	movw %ax, %fs
+	movw %ax, %gs
+	movw %ax, %ss
+	movw %ax, %ds
+	movw %ax, %es
+
+	# set up stack below the load point
+	movw $0x0000, %ax
 	cli # disable interrupts
 	movw %ax, %ss
-	movw $4096, %sp
+	movw $0x7C00, %sp
 	sti # enable interrupts
 
 	# set data segment to where we're loaded
-	movw $0x07C0, %ax
-	movw %ax, %ds
+#	movw $0x07C0, %ax
+#	movw %ax, %ds
 
 	mov %dl, %al # drive number
 	call print
@@ -40,38 +47,36 @@ mbr:
 	mov %bl, %al # low byte
 	call print
 
-	mov $0x09C0, %bx
+	mov $0x7E00, %bx
 	movw $0x5656, (%bx) # set data so we can see if it changed
 
 	# load kernel
 
 	# load destination buffer into es:bx
-	mov $0x09C0, %bx
-	mov %bx, %es # 0x0000
-	mov $0x0000, %bx # 0x07C0 + 0x0200 (boot_loader)
+	mov $0x7E00, %bx # 0x7C00 + 0x0200 (boot_loader)
 
 	# set parameters
 	mov $0, %ch # cylinder
 	mov $0, %dh # head
-	mov $0, %cl # sector
+	mov $2, %cl # sector
 
 	# read
 	mov $0x80, %dl # use 1st floppy (usb)
 	mov $0x02, %ah # read parameter for int 0x13
-	mov $2, %al # number of sectors (512 bytes each?) to read
+	mov $0x01, %al # number of sectors (512 bytes each?) to read
 	int $0x13 # read data
 
 	call print # actual num read sectors
 
 	# print loaded memory
-	mov $0x09C0, %bx # 0x07C0 + 512 (boot_loader)
+	mov $0x7E00, %bx # 0x7C00 + 512 (boot_loader)
 	mov (%bx), %al
 	call print
 
 	# run boot loader
-	mov %ds, %si
-	add $512, %si
-	call %si
+	mov $0x7E00, %ax
+	mov %ax, %si
+	jmp *%si
 
 .end:
 	cli
